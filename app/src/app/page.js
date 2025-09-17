@@ -1,25 +1,31 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
+// import "./styles.css"; // Make sure this path is correct
 
 export default function Home() {
   const [info, setInfo] = useState([]);
   const [name, setName] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // GET
+  // Fetch users (GET)
   const fetch_user = async () => {
+    setLoading(true);
     try {
       const res = await axios.get("/api/users");
       setInfo(res.data);
     } catch (err) {
       console.error("fetch_user:", err?.message || err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // POST
+  // Add new name (POST)
   const addName = async () => {
     if (!name.trim()) return;
+    setLoading(true);
     try {
       await axios.post("/api/users", { name });
       setName("");
@@ -29,16 +35,16 @@ export default function Home() {
     }
   };
 
-  // Start Editing (prefill input)
+  // Start editing
   const startEdit = (id, currentName) => {
     setEditingId(id);
     setName(currentName);
   };
 
-  // Save edited name
+  // Save edited name (PUT)
   const saveEdit = async () => {
-    if (!editingId) return;
-    if (!name.trim()) return;
+    if (!editingId || !name.trim()) return;
+    setLoading(true);
     try {
       await axios.put(`/api/users/${editingId}`, { name });
       setEditingId(null);
@@ -49,13 +55,15 @@ export default function Home() {
     }
   };
 
+  // Cancel edit
   const cancelEdit = () => {
     setEditingId(null);
     setName("");
   };
 
-  // DELETE
+  // Delete user (DELETE)
   const deleteName = async (id) => {
+    setLoading(true);
     try {
       await axios.delete(`/api/users/${id}`);
       if (editingId === id) cancelEdit();
@@ -65,36 +73,53 @@ export default function Home() {
     }
   };
 
+  // Initial fetch
   useEffect(() => {
     fetch_user();
   }, []);
 
   return (
-    <>
-      <div style={{ marginBottom: 12 }}>
+    <div className="page-container">
+      <div className="form-container">
         <input
-          placeholder=" Name"
+          placeholder="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         {editingId ? (
           <>
-            <button onClick={saveEdit}>Save</button>
-            <button onClick={cancelEdit}>Cancel</button>
+            <button onClick={saveEdit} disabled={loading}>
+              Save
+            </button>
+            <button onClick={cancelEdit} disabled={loading}>
+              Cancel
+            </button>
           </>
         ) : (
-          <button onClick={addName}>Add</button>
+          <button onClick={addName} disabled={loading}>
+            Add
+          </button>
         )}
       </div>
-      <div>
-        {info.map((val) => (
-          <div key={val._id} style={{ marginBottom: 6 }}>
-            <span style={{ marginRight: 8 } }>{val.name}</span>
-            <button onClick={() => startEdit(val._id, val.name)}>Edit</button>
-            <button onClick={() => deleteName(val._id)}>Delete</button>
-          </div>
-        ))}
-      </div>
-    </>
+
+      {loading ? (
+        <div className="spinner-container">
+          <div className="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      ) : (
+        <div className="user-list">
+          {info.map((val) => (
+            <div key={val._id} className="user-row">
+              <span>{val.name}</span>
+              <div className="actions">
+                <button onClick={() => startEdit(val._id, val.name)}>Edit</button>
+                <button onClick={() => deleteName(val._id)}>Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
