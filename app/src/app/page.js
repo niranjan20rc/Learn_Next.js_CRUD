@@ -82,7 +82,7 @@ export default function Home() {
     <div className="page-container">
       <div className="form-container">
         <input
-          placeholder="Name"
+          placeholder=" Enter Some Text"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
