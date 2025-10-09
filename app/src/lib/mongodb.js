@@ -7,3 +7,5 @@ export async function connectDB(){
     if(mongoose.connection.readyState===1 ||mongoose.connection.readyState===2)return
     await mongoose.connect(MONGO_URI);
 }
+
+
